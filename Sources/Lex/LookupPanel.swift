@@ -1,6 +1,7 @@
 import AppKit
 import Carbon.HIToolbox
 import SwiftUI
+import LexCore
 
 /// Rahmenloses, schwebendes Panel wie Spotlight. Bleibt sichtbar, wenn der Fokus woanders hingeht; ESC blendet aus.
 final class LookupPanel: NSPanel {
@@ -33,6 +34,7 @@ final class LookupPanelController {
     private var initialTop: CGFloat = 0
     /// Globales ESC, solange das Panel sichtbar ist – schließt Lex auch, wenn ein anderes Fenster den Fokus hat.
     private var escapeKey: HotKey?
+    private var hiddenAt: Date?
     private var contentHeight: CGFloat = 58
 
     init(openHistory: @escaping () -> Void, openSettings: @escaping () -> Void) {
@@ -98,6 +100,11 @@ final class LookupPanelController {
         // Eingabezeile in der Bildschirmmitte; die Antwort wächst nach unten.
         initialTop = visible.midY + 29 + visible.height * 0.08
         hosting.rootView = makeView()
+        // Nach kurzer Pause das Vorherige zeigen, nach längerer ein leeres Panel.
+        if let hiddenAt {
+            let idleSince = max(hiddenAt, model.finishedAt ?? hiddenAt)
+            if LexConfig.load().shouldReset(idleSince: idleSince) { model.reset() }
+        }
         model.prepare()
         layout()
         NSApp.activate()
@@ -110,6 +117,7 @@ final class LookupPanelController {
 
     func hide() {
         escapeKey = nil  // ESC gehört wieder den anderen Apps
+        if panel.isVisible { hiddenAt = Date() }
         panel.orderOut(nil)
     }
 

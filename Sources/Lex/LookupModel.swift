@@ -24,6 +24,8 @@ final class LookupModel: ObservableObject {
     @Published var duration: TimeInterval?
     @Published var notice: String?
     private(set) var lastQuery = ""
+    /// Wann zuletzt etwas passiert ist (Antwort fertig) – zählt fürs automatische Leeren mit.
+    private(set) var finishedAt: Date?
 
     var onOpenHistory: () -> Void = {}
     var onOpenSettings: () -> Void = {}
@@ -108,6 +110,7 @@ final class LookupModel: ObservableObject {
                 phase = .failed(failure!)
             }
             duration = Date().timeIntervalSince(begin)
+            finishedAt = Date()
             if let route {
                 HistoryStore.shared.append(HistoryEntry(
                     input: query, route: route, classification: classification, model: model ?? route.model,
@@ -115,6 +118,19 @@ final class LookupModel: ObservableObject {
                 NotificationCenter.default.post(name: .lexHistoryChanged, object: nil)
             }
         }
+    }
+
+    /// Leeres Panel für eine neue Anfrage. Eine laufende Anfrage bleibt unangetastet.
+    func reset() {
+        guard !isBusy, phase != .enterKey else { return }
+        input = ""
+        answer = ""
+        route = nil
+        classification = nil
+        model = nil
+        duration = nil
+        notice = nil
+        phase = .idle
     }
 
     private func showHelp() {

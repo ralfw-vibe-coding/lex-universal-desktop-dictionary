@@ -38,6 +38,14 @@ public struct LexConfig: Codable, Sendable {
     /// Wohin "Ausführlich im Chat" führt: "claude" oder "chatgpt".
     public var chat: String?
 
+    /// Wer Lex länger als so viele Sekunden nicht benutzt hat, bekommt beim Öffnen ein leeres Panel.
+    public var resetAfterSeconds: Double?
+
+    /// Soll das Panel beim Öffnen geleert werden? `idleSince`: Ausblenden bzw. Ende der letzten Antwort.
+    public func shouldReset(idleSince: Date, now: Date = Date()) -> Bool {
+        now.timeIntervalSince(idleSince) > (resetAfterSeconds ?? 60)
+    }
+
     public var chatService: ChatService { chat.flatMap(ChatService.init(rawValue:)) ?? .claude }
 
     public static let defaults = LexConfig(
@@ -55,7 +63,8 @@ public struct LexConfig: Codable, Sendable {
         minConfidence: 0.35,
         currentInfoThreshold: 0.6,
         hotkey: "cmd+shift+L",
-        chat: "claude"
+        chat: "claude",
+        resetAfterSeconds: 60
     )
 
     public func model(for category: Kind) -> String {

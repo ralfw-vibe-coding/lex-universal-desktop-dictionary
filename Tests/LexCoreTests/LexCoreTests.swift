@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 @testable import LexCore
 
@@ -88,5 +89,16 @@ import Testing
     @Test func chatURLs() {
         #expect(ChatService.claude.url(prompt: "a b").absoluteString == "https://claude.ai/new?q=a%20b")
         #expect(ChatService.chatgpt.url(prompt: "x").absoluteString == "https://chatgpt.com/?q=x")
+    }
+}
+
+@Suite struct ResetTests {
+    @Test func resetsAfterConfiguredPause() {
+        let now = Date()
+        #expect(!LexConfig.defaults.shouldReset(idleSince: now.addingTimeInterval(-34), now: now))
+        #expect(LexConfig.defaults.shouldReset(idleSince: now.addingTimeInterval(-61), now: now))
+        var config = LexConfig.defaults
+        config.resetAfterSeconds = 0
+        #expect(config.shouldReset(idleSince: now.addingTimeInterval(-1), now: now))
     }
 }

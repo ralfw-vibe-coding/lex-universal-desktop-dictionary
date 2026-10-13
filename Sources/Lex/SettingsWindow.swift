@@ -40,6 +40,29 @@ final class SettingsModel: ObservableObject {
     @Published var hotkeyDraft = LexConfig.load().hotkey ?? "cmd+shift+L"
     @Published var keyStatus: String?
     @Published var availableModels: [String] = []
+    @Published var loginEnabled = LoginItem.isEnabled
+    @Published var loginError: String?
+
+    func setLogin(_ on: Bool) {
+        do {
+            try LoginItem.set(on)
+            loginError = nil
+        } catch {
+            loginError = error.localizedDescription
+        }
+        loginEnabled = LoginItem.isEnabled
+    }
+
+    /// Hinweis, wenn der Login-Start auf eine andere Lex-Kopie zeigt oder Lex aus dem Entwicklungsordner läuft.
+    var loginNote: String? {
+        if let configured = LoginItem.configuredExecutable, configured != LoginItem.currentExecutable {
+            return "Startet beim Login: \(configured.replacingOccurrences(of: "/Contents/MacOS/Lex", with: "")) – Aus- und wieder Einschalten startet diese Kopie."
+        }
+        if !LoginItem.runsFromApplications {
+            return "Lex läuft aus \(Bundle.main.bundlePath) – besser erst mit ./build.sh install nach /Applications kopieren."
+        }
+        return nil
+    }
 
     var hasKey: Bool { APIKey.load() != nil }
 
@@ -90,6 +113,13 @@ struct SettingsView: View {
     var body: some View {
         Form {
             Section("Allgemein") {
+                Toggle("Beim Login starten", isOn: Binding(get: { model.loginEnabled }, set: { model.setLogin($0) }))
+                if let note = model.loginNote {
+                    Text(note).font(.caption).foregroundStyle(.secondary)
+                }
+                if let error = model.loginError {
+                    Text(error).font(.caption).foregroundStyle(.orange)
+                }
                 Picker("Ausführlich nachfragen in", selection: Binding(
                     get: { model.config.chatService },
                     set: { model.config.chat = $0.rawValue })) {
@@ -111,6 +141,23 @@ struct SettingsView: View {
                     }
                 }
                 Text("z. B. cmd+shift+L, ctrl+alt+space, cmd+opt+K – gilt nach „Übernehmen“ sofort.")
+                    .font(.caption).foregroundStyle(.secondary)
+
+                LabeledContent("Panel leeren nach") {
+                    HStack(spacing: 6) {
+                        TextField("", value: Binding(get: { model.config.resetAfterSeconds ?? 60 },
+                                                     set: { model.config.resetAfterSeconds = max(0, $0) }),
+                                  format: .number)
+                            .frame(width: 60)
+                            .multilineTextAlignment(.trailing)
+                        Stepper("", value: Binding(get: { model.config.resetAfterSeconds ?? 60 },
+                                                   set: { model.config.resetAfterSeconds = max(0, $0) }),
+                                in: 0...3600, step: 10)
+                            .labelsHidden()
+                        Text("Sekunden")
+                    }
+                }
+                Text("Öffnest du Lex innerhalb dieser Zeit wieder, siehst du die letzte Frage und Antwort; danach ist das Panel leer. 0 = immer leer.")
                     .font(.caption).foregroundStyle(.secondary)
             }
 
