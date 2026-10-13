@@ -112,7 +112,33 @@ final class LookupPanelController {
         if escapeKey == nil {
             escapeKey = HotKey(keyCode: kVK_Escape, modifiers: 0) { [weak self] in self?.hide() }
         }
-        NotificationCenter.default.post(name: .lexFocusInput, object: nil)
+        focusInput()
+    }
+
+    /// Cursor ins Eingabefeld. Beim allerersten Öffnen steht die SwiftUI-Oberfläche noch nicht,
+    /// wenn das Panel erscheint – deshalb erst im nächsten Durchlauf und notfalls direkt über AppKit.
+    private func focusInput() {
+        DispatchQueue.main.async { [weak self] in
+            NotificationCenter.default.post(name: .lexFocusInput, object: nil)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) { self?.ensureFieldIsFirstResponder() }
+        }
+    }
+
+    private func ensureFieldIsFirstResponder() {
+        guard panel.isKeyWindow || panel.isVisible else { return }
+        if panel.firstResponder is NSTextView { return }  // Feldeditor aktiv → Cursor ist im Feld
+        guard let field = Self.firstTextField(in: hosting) else { return }
+        panel.makeKeyAndOrderFront(nil)
+        panel.makeFirstResponder(field)
+        field.currentEditor()?.selectAll(nil)
+    }
+
+    private static func firstTextField(in view: NSView) -> NSTextField? {
+        if let field = view as? NSTextField, field.isEditable { return field }
+        for sub in view.subviews {
+            if let found = firstTextField(in: sub) { return found }
+        }
+        return nil
     }
 
     func hide() {
