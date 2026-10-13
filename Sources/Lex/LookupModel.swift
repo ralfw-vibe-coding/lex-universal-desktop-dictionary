@@ -26,6 +26,7 @@ final class LookupModel: ObservableObject {
     private(set) var lastQuery = ""
 
     var onOpenHistory: () -> Void = {}
+    var onOpenSettings: () -> Void = {}
     private var task: Task<Void, Never>?
 
     var isBusy: Bool { [.classifying, .waiting, .streaming].contains(phase) }
@@ -49,8 +50,10 @@ final class LookupModel: ObservableObject {
         case .command(.quit): NSApp.terminate(nil)
         case .command(.history): input = ""; onOpenHistory()
         case .command(.key): askForKey()
+        case .command(.settings): input = ""; onOpenSettings()
+        case .command(.help): showHelp()
         case .command(.chat(let service)): setChat(service)
-        case .command(.unknown(let text)): notice = "Unbekannter Befehl \(text) – möglich: /h, /chat claude|chatgpt, /key, /q"
+        case .command(.unknown(let text)): notice = "Unbekannter Befehl \(text) – /help zeigt alle Befehle."
         case let parsed: start(parsed)
         }
     }
@@ -112,6 +115,16 @@ final class LookupModel: ObservableObject {
                 NotificationCenter.default.post(name: .lexHistoryChanged, object: nil)
             }
         }
+    }
+
+    private func showHelp() {
+        task?.cancel()
+        input = ""
+        route = nil
+        duration = nil
+        phase = .idle
+        answer = Help.markdown(config: LexConfig.load())
+        notice = "Hilfe · ESC schließt"
     }
 
     private func setChat(_ service: ChatService?) {

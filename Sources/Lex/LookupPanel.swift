@@ -7,6 +7,7 @@ final class LookupPanel: NSPanel {
     var onEscape: () -> Void = {}
     var onHistoryShortcut: () -> Void = {}
     var onDeepDive: () -> Void = {}
+    var onSettingsShortcut: () -> Void = {}
 
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
@@ -16,6 +17,7 @@ final class LookupPanel: NSPanel {
     override func performKeyEquivalent(with event: NSEvent) -> Bool {
         let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
         if mods == .command, event.charactersIgnoringModifiers == "y" { onHistoryShortcut(); return true }
+        if mods == .command, event.charactersIgnoringModifiers == "," { onSettingsShortcut(); return true }
         if mods == .command, event.charactersIgnoringModifiers == "w" { onEscape(); return true }
         if mods == .command, event.keyCode == 36 || event.keyCode == 76 { onDeepDive(); return true }  // ⌘↩
         return super.performKeyEquivalent(with: event)
@@ -33,7 +35,7 @@ final class LookupPanelController {
     private var escapeKey: HotKey?
     private var contentHeight: CGFloat = 58
 
-    init(openHistory: @escaping () -> Void) {
+    init(openHistory: @escaping () -> Void, openSettings: @escaping () -> Void) {
         panel = LookupPanel(
             contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 58),
             styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
@@ -48,9 +50,14 @@ final class LookupPanelController {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.isReleasedWhenClosed = false
 
-        model.onOpenHistory = openHistory
+        // Fenster öffnen sich hinter dem schwebenden Panel – deshalb Panel vorher ausblenden.
+        let history = { [weak self] in self?.hide(); openHistory() }
+        let settings = { [weak self] in self?.hide(); openSettings() }
+        model.onOpenHistory = history
+        model.onOpenSettings = settings
         panel.onEscape = { [weak self] in self?.hide() }
-        panel.onHistoryShortcut = openHistory
+        panel.onHistoryShortcut = history
+        panel.onSettingsShortcut = settings
         panel.onDeepDive = { [weak self] in self?.model.openDeepDive() }
 
         hosting = NSHostingView(rootView: makeView())

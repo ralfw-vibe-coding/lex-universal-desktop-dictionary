@@ -29,6 +29,8 @@ import Testing
         #expect(InputParser.parse("/chat") == .command(.chat(nil)))
         #expect(InputParser.parse("/chat ChatGPT") == .command(.chat(.chatgpt)))
         #expect(InputParser.parse("/foo") == .command(.unknown("/foo")))
+        #expect(InputParser.parse("/help") == .command(.help))
+        #expect(InputParser.parse("/settings") == .command(.settings))
     }
 }
 

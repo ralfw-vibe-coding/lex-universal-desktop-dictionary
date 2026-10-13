@@ -29,6 +29,14 @@ public struct OpenRouter: Sendable {
         return request
     }
 
+    /// Alle Chat-Modelle bei OpenRouter (öffentlich, ohne Key).
+    public static func listModels() async throws -> [String] {
+        let (data, _) = try await URLSession.shared.data(from: base.appending(path: "v1/models"))
+        let json = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+        let models = (json?["data"] as? [[String: Any]]) ?? []
+        return models.compactMap { $0["id"] as? String }.sorted()
+    }
+
     // MARK: Jev (Decisions-API)
 
     /// Stellt Jev Fragen über einen Zustand und liefert die rohen Antworten je Frage-ID.

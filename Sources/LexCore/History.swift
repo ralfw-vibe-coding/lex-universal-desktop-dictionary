@@ -45,6 +45,8 @@ public final class HistoryStore: @unchecked Sendable {
             .appending(path: "Lex/history.json")
     }
 
+    public var fileURL: URL { url }
+
     /// Neueste zuerst.
     public func all() -> [HistoryEntry] {
         queue.sync { loaded() }

@@ -13,7 +13,7 @@ public enum ParsedInput: Equatable, Sendable {
 }
 
 public enum Command: Equatable, Sendable {
-    case history, quit, key
+    case history, quit, key, help, settings
     /// `/chat claude` bzw. `/chat chatgpt`; ohne Argument → aktuelle Einstellung anzeigen.
     case chat(ChatService?)
     case unknown(String)
@@ -28,6 +28,8 @@ public enum InputParser {
         case "/h", "/history", "/historie": return .command(.history)
         case "/q", "/quit", "/exit": return .command(.quit)
         case "/key": return .command(.key)
+        case "/help", "/hilfe", "/?": return .command(.help)
+        case "/settings", "/einstellungen", "/s": return .command(.settings)
         case "/chat": return .command(.chat(nil))
         default: break
         }

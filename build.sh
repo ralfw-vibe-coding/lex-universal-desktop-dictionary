@@ -63,7 +63,7 @@ if [[ "${1:-}" == "install" ]]; then
 <plist version="1.0">
 <dict>
   <key>Label</key><string>$APP_ID</string>
-  <key>ProgramArguments</key><array><string>$INSTALLED/Contents/MacOS/Lex</string></array>
+  <key>ProgramArguments</key><array><string>$INSTALLED/Contents/MacOS/Lex</string><string>--background</string></array>
   <key>RunAtLoad</key><true/>
   <key>ProcessType</key><string>Interactive</string>
 </dict>

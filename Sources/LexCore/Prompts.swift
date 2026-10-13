@@ -10,6 +10,21 @@ public enum Prompts {
         return (base + "\n\n" + body).replacingOccurrences(of: "{{sprache}}", with: languageName ?? "Englisch")
     }
 
+    /// Schreibt die eingebauten Prompts als bearbeitbare Dateien in den Prompts-Ordner.
+    /// Vorhandene Dateien bleiben unangetastet. Liefert den Ordner.
+    @discardableResult
+    public static func exportDefaults() -> URL {
+        let dir = LexConfig.directory.appending(path: "prompts", directoryHint: .isDirectory)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        for kind in Kind.allCases {
+            let file = dir.appending(path: "\(kind.rawValue).md")
+            if !FileManager.default.fileExists(atPath: file.path) {
+                try? builtIn(kind).write(to: file, atomically: true, encoding: .utf8)
+            }
+        }
+        return dir
+    }
+
     static let base = """
     Du bist Lex, ein Nachschlagewerk auf dem Desktop eines deutschsprachigen Nutzers.
     Antworte in Markdown (Überschriften, Listen, **fett**, Blockzitate). Keine Tabellen.
