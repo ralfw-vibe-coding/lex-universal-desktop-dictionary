@@ -1,0 +1,43 @@
+[
+  { "input": "the dog is barking", "expected": "translate_to_german", "current": false },
+  { "input": "je ne sais pas ce que tu veux dire", "expected": "translate_to_german", "current": false },
+  { "input": "I'll be there in a jiffy, don't wait up", "expected": "translate_to_german", "current": false },
+  { "input": "¿Dónde está la estación de tren?", "expected": "translate_to_german", "current": false },
+  { "input": "It's raining cats and dogs outside", "expected": "translate_to_german" },
+  { "input": "Ci vediamo domani sera al ristorante", "expected": "translate_to_german" },
+  { "input": "The committee has yet to reach a consensus on the proposal.", "expected": "translate_to_german" },
+
+  { "input": "serendipity", "expected": "foreign_word", "current": false },
+  { "input": "sobremesa", "expected": "foreign_word" },
+  { "input": "to procrastinate", "expected": "foreign_word" },
+  { "input": "kick the bucket", "expected": "foreign_word" },
+  { "input": "flâner", "expected": "foreign_word" },
+  { "input": "wistful", "expected": "foreign_word" },
+
+  { "input": "gewaltenteilung", "expected": "explain_concept", "current": false },
+  { "input": "holotropes atmen", "expected": "explain_concept", "current": false },
+  { "input": "tat twam asi", "expected": "explain_concept", "current": false },
+  { "input": "Quantenverschränkung", "expected": "explain_concept" },
+  { "input": "kategorischer Imperativ", "expected": "explain_concept" },
+  { "input": "wu wei", "expected": "explain_concept" },
+  { "input": "Dunning-Kruger-Effekt", "expected": "explain_concept" },
+  { "input": "Hanlon's razor", "expected": "explain_concept" },
+  { "input": "Ubuntu Philosophie", "expected": "explain_concept" },
+  { "input": "Schadenfreude", "expected": "explain_concept" },
+
+  { "input": "gewunken oder gewinkt", "expected": "language_question", "current": false },
+  { "input": "das oder dass nach Komma", "expected": "language_question" },
+  { "input": "Unterschied scheinbar anscheinend", "expected": "language_question" },
+  { "input": "Plural von Status", "expected": "language_question" },
+  { "input": "schreibt man zuhause zusammen?", "expected": "language_question" },
+  { "input": "wegen dem oder wegen des", "expected": "language_question" },
+
+  { "input": "wie hoch ist die zugspitze", "expected": "fact_question", "current": false },
+  { "input": "wann starb goethe", "expected": "fact_question", "current": false },
+  { "input": "Hauptstadt von Australien", "expected": "fact_question", "current": false },
+  { "input": "wie viele Einwohner hat Hamburg", "expected": "fact_question" },
+  { "input": "wer ist aktuell bundeskanzler", "expected": "fact_question", "current": true },
+  { "input": "wie steht der euro zum dollar", "expected": "fact_question", "current": true },
+  { "input": "wer hat gestern die bundesliga gewonnen", "expected": "fact_question", "current": true },
+  { "input": "aktueller Leitzins der EZB", "expected": "fact_question", "current": true }
+]

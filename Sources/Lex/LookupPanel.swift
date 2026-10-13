@@ -1,0 +1,114 @@
+import AppKit
+import SwiftUI
+
+/// Rahmenloses, schwebendes Panel wie Spotlight. Bleibt sichtbar, wenn der Fokus woanders hingeht; ESC blendet aus.
+final class LookupPanel: NSPanel {
+    var onEscape: () -> Void = {}
+    var onHistoryShortcut: () -> Void = {}
+    var onDeepDive: () -> Void = {}
+
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
+
+    override func cancelOperation(_ sender: Any?) { onEscape() }
+
+    override func performKeyEquivalent(with event: NSEvent) -> Bool {
+        let mods = event.modifierFlags.intersection(.deviceIndependentFlagsMask)
+        if mods == .command, event.charactersIgnoringModifiers == "y" { onHistoryShortcut(); return true }
+        if mods == .command, event.charactersIgnoringModifiers == "w" { onEscape(); return true }
+        if mods == .command, event.keyCode == 36 || event.keyCode == 76 { onDeepDive(); return true }  // ⌘↩
+        return super.performKeyEquivalent(with: event)
+    }
+}
+
+@MainActor
+final class LookupPanelController {
+    static let width: CGFloat = 760
+    let model = LookupModel()
+    private let panel: LookupPanel
+    private var hosting: NSHostingView<LookupView>!
+    private var initialTop: CGFloat = 0
+    private var contentHeight: CGFloat = 58
+
+    init(openHistory: @escaping () -> Void) {
+        panel = LookupPanel(
+            contentRect: NSRect(x: 0, y: 0, width: Self.width, height: 58),
+            styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
+            backing: .buffered, defer: false)
+        panel.isFloatingPanel = true
+        panel.level = .floating
+        panel.hidesOnDeactivate = false
+        panel.isMovableByWindowBackground = true
+        panel.backgroundColor = .clear
+        panel.isOpaque = false
+        panel.hasShadow = true
+        panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.isReleasedWhenClosed = false
+
+        model.onOpenHistory = openHistory
+        panel.onEscape = { [weak self] in self?.hide() }
+        panel.onHistoryShortcut = openHistory
+        panel.onDeepDive = { [weak self] in self?.model.openDeepDive() }
+
+        hosting = NSHostingView(rootView: makeView())
+        hosting.sizingOptions = []
+        panel.contentView = hosting
+    }
+
+    private func makeView() -> LookupView {
+        LookupView(model: model, maxAnswerHeight: maxAnswerHeight) { [weak self] height in
+            DispatchQueue.main.async {
+                self?.contentHeight = ceil(height)
+                self?.layout()
+            }
+        }
+    }
+
+    /// Der Bildschirm, auf dem das Panel zuletzt geöffnet wurde.
+    private lazy var screen: NSScreen = mouseScreen
+
+    private var mouseScreen: NSScreen {
+        let mouse = NSEvent.mouseLocation
+        return NSScreen.screens.first { $0.frame.contains(mouse) } ?? NSScreen.main ?? NSScreen.screens[0]
+    }
+
+    private var maxAnswerHeight: CGFloat {
+        screen.visibleFrame.height * 0.85 - 58 - 40
+    }
+
+    var isVisible: Bool { panel.isVisible }
+
+    func toggle() {
+        if panel.isVisible && panel.isKeyWindow { hide() } else { show() }
+    }
+
+    func show() {
+        screen = mouseScreen
+        let visible = screen.visibleFrame
+        // Eingabezeile in der Bildschirmmitte; die Antwort wächst nach unten.
+        initialTop = visible.midY + 29 + visible.height * 0.08
+        hosting.rootView = makeView()
+        model.prepare()
+        layout()
+        NSApp.activate()
+        panel.makeKeyAndOrderFront(nil)
+        NotificationCenter.default.post(name: .lexFocusInput, object: nil)
+    }
+
+    func hide() {
+        panel.orderOut(nil)
+    }
+
+    /// Oberkante bleibt stehen; reicht der Platz nach unten nicht, rutscht das Panel nach oben.
+    private func layout() {
+        let visible = screen.visibleFrame
+        let height = min(contentHeight, visible.height - 40)
+        let bottomLimit = visible.minY + 20
+        let top = max(initialTop, min(visible.maxY - 20, bottomLimit + height))
+        let frame = NSRect(x: visible.midX - Self.width / 2, y: top - height, width: Self.width, height: height)
+        if panel.frame != frame {
+            panel.setFrame(frame, display: true)
+            panel.invalidateShadow()
+        }
+    }
+}
